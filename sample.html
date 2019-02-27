@@ -1,0 +1,142 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="ja" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<!-- <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/> //-->
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>Simple Edition :: 数値範囲の正規表現を自動生成</title>
+<meta name="description" content="JavaScriptで文字列検索のための数値範囲の正規表現を生成する関数を作成しました。" />
+
+
+</head>
+<body>
+<div id="page_wrapper">
+<div id="page">
+
+	<div id="central" class="default">
+		<div id="body_wrapper">	
+			<div id="body">	
+				<h1 class="page_title">
+	数値範囲の正規表現を自動生成</h1>	<div id="blockStyle171Main7" class=" ccm-block-styles" >
+<div class="">
+	JavaScriptで文字列検索のための数値範囲の正規表現を生成する関数を作成しました。</div></div>	<div id="blockStyle302Main11" class=" ccm-block-styles" >
+
+<div id="HTMLBlock302" class="HTMLBlock">
+<form id="number_range_form_id" name="number_range_form" >
+<h3>数値の範囲</h3>
+<div>
+<input type="text" id="start_box_id" name="start_box" size="20" value="" placeholder="開始値（整数）" style="font-size:100%;"/>〜<input type="text" id="end_box_id" name="end_box" size="20" value="" placeholder="終了値（整数）" style="font-size:100%;"/>
+<span style="white-space:nowrap">
+<input type="button" value="整数に一致" style="font-size:100%;" onclick="makeRegexp();"/>
+<input type="button" value="小数点付き数値にも一致" style="font-size:100%;" onclick="makeRegexp(2);"/></span>
+<span style="white-space:nowrap">
+<input type="checkbox" value="clip" id="clip_id" name="clip">数字以外の文字で数値の前後を囲う
+</span>
+</div>
+<h3>正規表現</h3>
+<div>
+<textarea id="num_range_regexp_id" name="num_range_regexp" cols="40" rows="5" style="font-size:100%;" readonly></textarea>
+ <input type="button" value="クリップボードにコピー" style="font-size:100%;" onclick="copyRegexp();"/>
+</div>
+</form>
+
+<script type="text/javascript" src="numberRangeRegexp.js"></script>
+<script type="text/JavaScript">
+<!--
+
+//数値範囲の正規表現化
+function makeRegexp(aNum){
+	var start_str = toHalfWidth(document.number_range_form.start_box.value).replace(/,/g, '');//全角->半角とカンマの除去
+	var end_str = toHalfWidth(document.number_range_form.end_box.value).replace(/,/g, '');
+	var start_value = parseInt(start_str);
+	var end_value = parseInt(end_str);
+	var clip_checked = document.number_range_form.clip.checked;
+	var out_of_range = false;
+	
+//	window.console.log('start_str:' + start_str);
+//	window.console.log('end_str:' + end_str);
+//	window.console.log('start_value:' + start_value);
+//	window.console.log('end_value:' + end_value);
+	
+	if(start_str == '' || isNaN(start_value)){
+		start_str = '';
+	}else if(start_value > 9007199254740992 || start_value < -9007199254740992){
+		start_str = 'out of range';
+		out_of_range = true;
+	}else{
+		start_str = String(start_value);
+	}
+	
+	if(end_str == '' || isNaN(end_value)){
+		end_str = '';
+	}else if(end_value > 9007199254740992 || end_value < -9007199254740992){
+		end_str = 'out of range';
+		out_of_range = true;
+	}else{
+		end_str = String(end_value);
+	}
+
+//	window.console.log('start_str:' + start_str);
+//	window.console.log('end_str:' + end_str);
+
+	document.number_range_form.start_box.value = start_str;//テキストボックスの値を更新
+	document.number_range_form.end_box.value = end_str;
+
+	if(out_of_range) {
+		document.number_range_form.num_range_regexp.value = '';
+		return;
+	}
+	var exp;
+	if(aNum == '2'){
+		exp = numberRangeRegexp(start_str, end_str, true);
+	}else{
+		exp = numberRangeRegexp(start_str, end_str);
+	}
+	if(clip_checked) {
+		exp = addClip(exp);
+	}
+	document.number_range_form.num_range_regexp.value = exp;
+}
+
+function copyRegexp(){
+	var txt_area = document.getElementById('num_range_regexp_id');
+	txt_area.focus();
+	document.execCommand('selectAll');
+	document.execCommand('copy');
+	txt_area.blur();
+}
+//-->
+</script>
+</div></div><div class="content_and_images_block">
+
+
+
+	<div class="content">
+	<h2>JavaScript関数の情報</h2>
+<h3>JSファイル</h3>
+<p style="padding-left: 30px;"><a href="numberRangeRegexp.js">numberRangeRegexp.js</a></p>
+<h3>構文</h3>
+<p style="padding-left: 30px;">numberRangeRegexp( start, end ,withDecimal) //範囲内の整数または小数点付き数値にマッチング</p>
+<h4><span style="font-size: 1.17em;">引数</span></h4>
+<p style="padding-left: 30px;">start:数値範囲の開始値（整数）</p>
+<p style="padding-left: 30px;">end:数値範囲の終了値（整数）</p>
+<p style="padding-left: 30px;">withDecimal:小数点付き数値も含めるかどうか（bool）</p>
+<h3>返り値</h3>
+<p style="padding-left: 30px;">数値範囲を表す正規表現の文字列</p>	</div>
+	
+
+<div class="ccm-spacer"></div>
+</div>
+			</div>
+		</div>
+
+</div>
+</div>
+
+
+</body>
+</html>
