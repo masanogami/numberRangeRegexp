@@ -1,6 +1,6 @@
 //numberRangeRegexp.js
-//version 1.1.1
-//update 2018.12.10
+//version 1.1.4
+//update 2020.1.30
 //by Nogami Masahiko
 
 
@@ -51,10 +51,10 @@ function makeBraces(str1, str2){//繰り返しを生成
 }
 
 function addMinus(str){//マイナス記号を追加
-	return '-(' + str + ')';
+                return '-(' + str + ')';
 }
 
-function addDecimal(str){//小数点以下を追加
+function addDecimal(str){//小数点以下を追加（あってもなくてもマッチ）
 	return '(' + str + ')(\\.[0-9]+)?';
 }
 
@@ -65,7 +65,7 @@ function addClip(str){//前後を数字以外で囲う
 
 //数値範囲の正規表現を生成
 function numberRangeRegexp(start, end, withDecimal){//前処理部
-	if(arguments.length < 3){
+	if(arguments.length < 3){//引数が２つ以下の場合
 		withDecimal = false;
 	}
 	if(start === '' && end === ''){//どちらも空の場合、終了
@@ -84,7 +84,7 @@ function numberRangeRegexp(start, end, withDecimal){//前処理部
 	
 	var isMinus = false;
 	
-	if( start_value < 0 && end_value <= 0){//どちらもマイナス値の場合
+	if( start_value < 0 && end_value < 0){//どちらもマイナス値の場合
 		isMinus = true;
 		start_value = -start_value;
 		end_value = -end_value;
@@ -95,20 +95,44 @@ function numberRangeRegexp(start, end, withDecimal){//前処理部
 		start_value = end_value;
 		end_value = temp;
 	}
+	
+	var ex;
 
-	if(start_value < 0 && end_value > 0){//startのみマイナス値の場合
-		if(withDecimal){
-			return String(start_value) + '|' + addDecimal(addMinus(makeNumberRangeRegexp(0, -start_value - 1))) + '|'+ 
-					addDecimal(makeNumberRangeRegexp(0, end_value - 1) + '|' + String(end_value));
+	if(start_value < 0 && end_value >= 0){//startのみマイナス値の場合
+		if(withDecimal){//小数点付きもマッチングさせる場合
+			if(start_value == -1){//startが-1の場合
+    			ex = String(start_value) + '|' + addDecimal('-0') + '|';
+            }else{
+                ex = String(start_value) + '|' + addDecimal(addMinus(makeNumberRangeRegexp(0, -start_value - 1))) + '|';
+            }
+            if(end_value == 0){//endが0の場合
+                ex = ex + '0';
+            }else if(end_value == 1){//endが1の場合
+                ex = ex + addDecimal('0') + '|' + String(end_value);
+            }else{
+                ex = ex + addDecimal(makeNumberRangeRegexp(0, end_value - 1)) + '|' + String(end_value);
+            }
 		}else{
-			return addMinus(makeNumberRangeRegexp(1, -start_value)) + '|'+ makeNumberRangeRegexp(0, end_value);
+			if(start_value == -1){//startが-1の場合
+    			ex = String(start_value) + '|';
+            }else{
+                ex = addMinus(makeNumberRangeRegexp(1, -start_value)) + '|';
+            }
+            if(end_value == 0){//endが0の場合
+                ex = ex + '0';
+            }else{
+                ex = ex + makeNumberRangeRegexp(0, end_value);;
+            }
 		}
 	}else{
-		var ex = makeNumberRangeRegexp(start_value, end_value);
+		if(withDecimal){
+			ex = addDecimal(makeNumberRangeRegexp(0, end_value - 1)) + '|' + String(end_value);
+		}else{
+			ex = makeNumberRangeRegexp(start_value, end_value);
+		}
 		if(isMinus) ex = addMinus(ex);
-		if(withDecimal) ex = addDecimal(ex);
-		return ex;
 	}
+	return ex;
 }	
 
 	
@@ -121,7 +145,7 @@ function makeNumberRangeRegexp(start_value, end_value){//正規表現生成部 s
 	var agree_digit = 0;//startとendの同数字の桁数
 	
 	if(start_digit == end_digit){//start,endの桁数が同じ場合
-		for(var i = start_digit; i > 0; i--){
+		for(var i = start_digit; i > 0; i--){//違いがある桁数を求める
 			if(start_str.substr(0, i) == end_str.substr(0, i)){
 				agree_digit = i;
 				break;
@@ -142,9 +166,9 @@ function makeNumberRangeRegexp(start_value, end_value){//正規表現生成部 s
 	var upper_thre;//上位領域のしきい値
 
 	var exL = ""; //下位領域
-	if(start_str.match(/^[1-9]0+$/)){//x000...の場合
+	if(start_str.match(/^[1-9]0+$/)){//startがx000...の場合
 		lower_thre = start_str;
-	}else if(start_str.match(/^[1-9]9+$/)){//x999...の場合
+	}else if(start_str.match(/^[1-9]9+$/)){//startがx999...の場合
 		exL = start_str + '|';
 		lower_thre = String(parseInt(start_str.charAt(0)) + 1) + '0'.repeat(start_digit - 1);
 	}else{
@@ -168,12 +192,12 @@ function makeNumberRangeRegexp(start_value, end_value){//正規表現生成部 s
 
 		}
 	}
-	window.console.log('lower_thre:' + lower_thre);
+//	window.console.log('lower_thre:' + lower_thre);
 
 	var exU = ''; //上位領域
-	if(end_str.match(/^[1-9]9+$/)){//x999...の場合
+	if(end_str.match(/^[1-9]9+$/)){//endがx999...の場合
 		upper_thre = end_str;
-	}else if(end_str.match(/^[1-9]0+$/)){//x000...の場合
+	}else if(end_str.match(/^[1-9]0+$/)){//endがx000...の場合
 		exU = end_str;
 		upper_thre = String(parseInt(end_str.substr(0,2))-1) + '9'.repeat(end_digit - 2);
 	}else{
@@ -185,7 +209,7 @@ function makeNumberRangeRegexp(start_value, end_value){//正規表現生成部 s
 		exU = exU + end_str.substr(0, end_digit - 1) + makeBrackets(0, end_str.charAt(end_digit - 1)) + '|';
 		upper_thre = String(parseInt(String(parseInt(end_str.substr(0,agree_digit+1)) - 1) + '9'.repeat(end_digit - agree_digit - 1)));
 	}
-	window.console.log('upper_thre:' + upper_thre);
+//	window.console.log('upper_thre:' + upper_thre);
 
 	var exM = ""; //中位領域
 
@@ -218,9 +242,9 @@ function makeNumberRangeRegexp(start_value, end_value){//正規表現生成部 s
 		}
 	}
 
-	window.console.log('下位:'+exL);
-	window.console.log('中位:'+exM);
-	window.console.log('上位:'+exU);
+//	window.console.log('下位:'+exL);
+//	window.console.log('中位:'+exM);
+//	window.console.log('上位:'+exU);
 
 	var ex = exL+exM+exU;
 	if(ex.charAt(ex.length - 1) == '|') ex = ex.substr(0, ex.length - 1);
